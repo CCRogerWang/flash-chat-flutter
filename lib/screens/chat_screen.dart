@@ -77,20 +77,26 @@ class _ChatScreenState extends State<ChatScreen> {
                   Expanded(
                     child: TextField(
                       controller: messageTextController,
-                      onChanged: (value) {
-                        messageText = value;
+                      onChanged: (v) {
+                        setState(() {});
                       },
                       decoration: kMessageTextFieldDecoration,
                     ),
                   ),
                   FlatButton(
-                    onPressed: () {
-                      messageTextController.clear();
-                      _firestore.collection('messages').add({
-                        'text': messageText,
-                        'sender': loggedInUser.email,
-                      });
-                    },
+                    disabledTextColor: Colors.black12,
+                    textColor: Colors.blueAccent,
+                    onPressed: messageTextController.value.text.length == 0
+                        ? null
+                        : () {
+                            String text = messageTextController.value.text;
+                            _firestore.collection('messages').add({
+                              'text': text,
+                              'sender': loggedInUser.email,
+                              'createdAt': Timestamp.now(),
+                            });
+                            messageTextController.clear();
+                          },
                     child: Text(
                       'Send',
                       style: kSendButtonTextStyle,
@@ -110,7 +116,8 @@ class MessagesStream extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: _firestore.collection('messages').snapshots(),
+      stream:
+          _firestore.collection('messages').orderBy('createdAt').snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Center(
